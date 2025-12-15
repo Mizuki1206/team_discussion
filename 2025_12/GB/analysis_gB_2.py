@@ -6,9 +6,9 @@ import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
-# 設定
-LOG_FILE = "/Users/mizuki/team_discussion/2025_12/meeting_log/meeting_log_gB_1.txt"
-OUTPUT_CSV = "/Users/mizuki/team_discussion/2025_12/analysis_csv/analysis_csv_gB_1.csv"
+# --- 設定 ---
+LOG_FILE = "/Users/mizuki/team_discussion/2025_12/meeting_log/meeting_log_gB_2.txt"
+OUTPUT_CSV = "/Users/mizuki/team_discussion/2025_12/analysis_csv/analysis_csv_gB_2.csv"
 NUM_SEGMENTS = 20
 
 # ノイズ除去リスト
@@ -65,7 +65,7 @@ def main():
     for line in lines:
         line = line.strip()
         if not line: continue
-        if metadata_pattern.match(line): continue
+        if metadata_pattern.match(line): continue # メタデータ行スキップ
         
         text = line
         if text in IGNORE_PHRASES: continue

@@ -4,8 +4,8 @@ import matplotlib.ticker as ticker
 import japanize_matplotlib
 
 # 設定
-CSV_FILE = "/Users/mizuki/team_discussion/2025_12/analysis_csv/analysis_csv_gB_1.csv"
-OUTPUT_IMG = "/Users/mizuki/team_discussion/2025_12/analysis_graph_gB_1.png"
+CSV_FILE = "/Users/mizuki/team_discussion/2025_12/analysis_csv/analysis_csv_gB_2.csv"
+OUTPUT_IMG = "/Users/mizuki/team_discussion/2025_12/analysis_graph_gB_2.png"
 
 def main():
     # データの読み込み
