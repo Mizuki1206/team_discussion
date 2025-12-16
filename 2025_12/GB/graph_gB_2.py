@@ -4,8 +4,8 @@ import matplotlib.ticker as ticker
 import japanize_matplotlib
 
 # 設定
-CSV_FILE = "/Users/mizuki/team_discussion/2025_12/analysis_csv/analysis_csv_gA_3.csv"
-OUTPUT_IMG = "/Users/mizuki/team_discussion/2025_12/analysis_graph_gA_3.png"
+CSV_FILE = "/Users/mizuki/team_discussion/2025_12/analysis_csv/analysis_csv_gB_2.csv"
+OUTPUT_IMG = "/Users/mizuki/team_discussion/2025_12/analysis_graph_gB_2.png"
 
 def main():
     # データの読み込み
@@ -19,6 +19,8 @@ def main():
     plt.figure(figsize=(10, 6)) # 横長で見やすく
     
     # スタイル設定
+    # ※スタイル設定でフォントがリセットされるのを防ぐため、
+    # japanize() はスタイル適用の後に呼ぶと確実です（通常はインポートだけで効きます）
     plt.style.use('seaborn-v0_8-whitegrid')
     japanize_matplotlib.japanize()
     
@@ -44,6 +46,9 @@ def main():
     # 凡例を表示
     plt.legend(loc='upper right', frameon=True, fontsize=11)
 
+    # 特徴的なポイントに注釈を入れる（日本語）
+    # 注釈位置はデータに合わせて調整してください。ここでは元コードの固定値を使用しています。
+    # 必要であれば df.loc[...] を使って動的に取得する形に戻せます。
 
     # Segment 7: 代表度のピーク（収束・決定）
     # データが存在する場合のみ座標を取得して描画

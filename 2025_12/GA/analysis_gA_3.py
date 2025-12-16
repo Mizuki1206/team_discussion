@@ -7,7 +7,8 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
 # 設定
-LOG_FILE = "/Users/mizuki/team_discussion/2025_12/meeting_log/meeting_log_gA_2.txt" 
+LOG_FILE = "/Users/mizuki/team_discussion/2025_12/meeting_log/meeting_log_gA_3.txt"
+OUTPUT_CSV = "/Users/mizuki/team_discussion/2025_12/analysis_csv/analysis_csv_gA_3.csv"
 NUM_SEGMENTS = 20
 
 # ノイズ除去リスト
@@ -15,11 +16,12 @@ IGNORE_PHRASES = [
     "ありがとうございます", "ありがとう", "お願いします", "すいません",
     "ああ", "あー", "うん", "そう", "そうですね", "なるほど", "はい", "えー", "えっと", 
     "まあ", "ですね", "という", "ていう", "聞こえる", "見えてる", "オッケー", "OK", "大丈夫", 
-    "終了", "ボタ", "チンク", "まじ", "へー", "ふーん", "ね", "さ"
+    "へー", "ふーん", "ね", "さ", "よ",
+    "終了", "開始", "レコーディング", "録音", "分", "時間", "source", "ソース", "共有"
 ]
 
 STOP_WORDS = ["ある", "いる", "なる", "れる", "られる", "こと", "ため", "おい", "くる", "いく", 
-              "これ", "それ", "あれ", "さん", "の", "ん", "よう", "ない"]
+              "これ", "それ", "あれ", "さん", "の", "ん", "よう", "ない", "私", "僕", "俺"]
 
 def get_clean_words(text):
     tagger = MeCab.Tagger(ipadic.MECAB_ARGS)
@@ -37,107 +39,74 @@ def get_clean_words(text):
     return words
 
 def main():
-    # ログファイルの読み込みとクリーニング
-    with open(LOG_FILE, 'r', encoding='utf-8') as f:
-        lines = f.readlines()
+    try:
+        with open(LOG_FILE, 'r', encoding='utf-8') as f:
+            lines = f.readlines()
+    except FileNotFoundError:
+        print(f"ファイルが見つかりません: {LOG_FILE}")
+        return
 
-    clean_docs = [] # 全発話リスト
-
-    # 正規表現: メタデータ行のパターン（例: [名前] 12:34:56 など）
+    clean_docs = []
     metadata_pattern = re.compile(r'.*\[.*?\].*\d{1,2}:\d{2}:\d{2}')
 
     for line in lines:
         line = line.strip()
         if not line: continue
+        if metadata_pattern.match(line): continue
         
-        # メタデータ行（発言者や時間）であればスキップする
-        if metadata_pattern.match(line):
-            continue
-
-        # メタデータ行以外は「発言内容」として扱う
         text = line
-            
-        # 完全一致での除外
         if text in IGNORE_PHRASES: continue
         
-        # 形態素解析
         words = get_clean_words(text)
         if words:
             clean_docs.append(" ".join(words))
 
-    print(f"有効発話数: {len(clean_docs)} 行")
-
-    # データを「区間 (Segment)」単位でまとめる
     segment_docs = [""] * NUM_SEGMENTS
-    if len(clean_docs) > 0:
-        chunk_size = len(clean_docs) / NUM_SEGMENTS
-    else:
-        chunk_size = 1 # データがない場合の回避
+    chunk_size = len(clean_docs) / NUM_SEGMENTS if clean_docs else 1
 
     for i, doc in enumerate(clean_docs):
-        # 現在の発話がどの区間(0〜19)に入るか計算
         seg_idx = int(i / chunk_size)
         if seg_idx >= NUM_SEGMENTS: seg_idx = NUM_SEGMENTS - 1
-        
         segment_docs[seg_idx] += " " + doc
 
-    # ベクトル化 (TF-IDF)
-    # 文書が空の場合のエラー回避
     if all(not d.strip() for d in segment_docs):
-        print("有効なテキストデータが抽出できませんでした。")
+        print("有効なテキストデータがありませんでした。")
         return
 
     vectorizer = TfidfVectorizer()
     X = vectorizer.fit_transform(segment_docs)
-    
     global_centroid = np.asarray(X.mean(axis=0))
 
-    # 指標の計算
     results = []
     for i in range(NUM_SEGMENTS):
         current_vec = X[i].toarray()
-        
-        # 鮮度
-        if i == 0:
-            novelty = 0.0 # 最初は比較対象なし
+        if i == 0: novelty = 0.0
         else:
             prev_vec = X[i-1].toarray()
             sim = cosine_similarity(current_vec, prev_vec)[0][0]
             novelty = 1.0 - sim
-            
-        # 代表度
         rep_sim = cosine_similarity(current_vec, global_centroid)[0][0]
         representativeness = rep_sim
 
-        # 代表単語の抽出
-        # ※TF-IDF値が高い単語を表示する簡易ロジック
         feature_names = vectorizer.get_feature_names_out()
         tfidf_scores = current_vec.flatten()
-        
-        # スコアが0でない単語のみを対象にする
         top_indices = tfidf_scores.argsort()[::-1]
         top_words = []
         for idx in top_indices:
             if tfidf_scores[idx] > 0:
                 top_words.append(feature_names[idx])
-            if len(top_words) >= 5:
-                break
+            if len(top_words) >= 5: break
 
         results.append({
-            "Segment": i + 1, # 1分目, 2分目...という意味
+            "Segment": i + 1,
             "Novelty": round(novelty, 3),
             "Representativeness": round(representativeness, 3),
             "Main_Topics": top_words
         })
 
-    # 結果表示
     df = pd.DataFrame(results)
-    print("-" * 60)
-    print(df[["Segment", "Novelty", "Representativeness", "Main_Topics"]])
-    
-    # CSV保存
-    df.to_csv("analysis_csv_gA_2.csv", index=False, encoding='utf-8_sig')
-    print("\nanalysis_csv_gA_2.csv に保存しました。")
+    df.to_csv(OUTPUT_CSV, index=False, encoding='utf-8_sig')
+    print(f"保存完了: {OUTPUT_CSV}")
 
 if __name__ == "__main__":
     main()

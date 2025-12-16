@@ -7,8 +7,8 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
 # 設定
-LOG_FILE = "/Users/mizuki/team_discussion/2025_12/meeting_log/meeting_log_gB_1.txt"
-OUTPUT_CSV = "/Users/mizuki/team_discussion/2025_12/analysis_csv/analysis_csv_gB_1.csv"
+LOG_FILE = "/Users/mizuki/team_discussion/2025_12/meeting_log/meeting_log_gC_4.txt"
+OUTPUT_CSV = "/Users/mizuki/team_discussion/2025_12/analysis_csv/analysis_csv_gC_4.csv"
 NUM_SEGMENTS = 20
 
 # ノイズ除去リスト
